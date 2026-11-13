@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brotherhud Kitchen</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#f7f3ec;color:#1a1a1a;font-family:'Segoe UI',Arial,sans-serif;padding-bottom:96px}
+header{background:#111;color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50}
+header b{font-size:18px;letter-spacing:1px}
+header span{color:#d4a017;font-weight:800;font-size:13px}
+.hero{background:#111;color:#fff;text-align:center;padding:44px 18px 36px}
+.hero h1{font-size:32px;line-height:1.15;font-weight:800}
+.hero h1 em{color:#d4a017;font-style:normal}
+.hero p{color:#bbb;font-size:14px;margin-top:10px}
+.status{display:inline-block;margin-top:16px;background:#fff;color:#111;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:800}
+.wrap{max-width:760px;margin:auto;padding:22px 16px}
+.search{width:100%;padding:14px 16px;border:1px solid #ddd;border-radius:12px;font-size:15px;background:#fff;outline:none;margin-bottom:18px}
+.section-title{font-size:20px;font-weight:800;margin:8px 0 14px}
+.item{background:#fff;border:1px solid #eee;border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;box-shadow:0 3px 12px rgba(0,0,0,.05)}
+.item h3{font-size:16px}
+.item p{font-size:12px;color:#777;margin-top:4px}
+.price{margin-left:auto;font-weight:900;color:#111;white-space:nowrap}
+.add{background:#111;color:#fff;border:none;padding:9px 16px;border-radius:10px;font-weight:800}
+.loyal{background:#111;color:#fff;border-radius:18px;padding:22px;text-align:center;margin-top:24px}
+.loyal h2{color:#d4a017;margin-bottom:8px}
+.loyal p{color:#ccc;font-size:13px}
+.loyal b{display:block;color:#fff;margin:12px 0;font-size:16px}
+.loyal button{background:#d4a017;color:#111;border:none;padding:9px 14px;border-radius:10px;font-weight:900;margin:3px}
+.bar{position:fixed;left:12px;right:12px;bottom:12px;display:flex;background:#111;border-radius:16px;overflow:hidden;z-index:99;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.bar a,.bar button{flex:1;text-align:center;padding:14px 6px;color:#fff;text-decoration:none;font-weight:800;font-size:13px;background:none;border:none;font-family:inherit}
+.bar a:last-child{background:#d4a017;color:#111}
+.cart{position:fixed;right:12px;bottom:82px;width:300px;max-width:92vw;background:#fff;border-radius:18px;padding:16px;display:none;z-index:100;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.cart h3{margin-bottom:10px}
+.send{display:block;text-align:center;background:#111;color:#fff;padding:12px;border-radius:12px;font-weight:800;text-decoration:none;margin-top:10px}
+</style>
+</head>
+<body>
+
+<header>
+<b>BROTHERHUD KITCHEN</b>
+<span id="clock">11AM - 11PM</span>
+</header>
+
+<section class="hero">
+<h1>Fresh Food,<br><em>Hot & Tasty</em></h1>
+<p>Harunabad ki behtareen chai, shawarma aur BBQ</p>
+<div class="status" id="status">Checking...</div>
+</section>
+
+<section class="wrap">
+<input class="search" id="search" placeholder="Menu me search karo...">
+<div class="section-title">Our Menu</div>
+<div id="menu"></div>
+
+<div class="loyal">
+<h2>Loyalty Card</h2>
+<p>10 order par 1 Shawarma FREE</p>
+<b id="loyalText">0 / 10 Orders</b>
+<button onclick="setLoyal(5)">5 Orders</button>
+<button onclick="setLoyal(10)">10 Orders</button>
+<button onclick="setLoyal(0)">Reset</button>
+</div>
+</section>
+
+<div class="cart" id="cartBox">
+<h3>Your Cart</h3>
+<div id="cartItems">Cart khali hai</div>
+<p id="cartTotal" style="font-weight:900;margin-top:10px">Total: Rs 0</p>
+<a class="send" id="sendBtn" href="https://wa.me/923280171357">Send on WhatsApp</a>
+<button onclick="clearCart()" style="width:100%;margin-top:8px;background:#eee;border:none;padding:10px;border-radius:10px;font-weight:800">Clear</button>
+</div>
+
+<div class="bar">
+<a href="tel:03280171357">Call</a>
+<button onclick="toggleCart()">Cart (<span id="count">0</span>)</button>
+<a href="https://wa.me/923280171357">WhatsApp</a>
+</div>
+
+<script>
+const items=[
+["Nuggets 5 pc",220,"Crispy golden nuggets"],
+["Chicken Leg Piece",220,"Crispy fried leg piece"],
+["Zinger Burger",250,"Crunchy zinger burger"],
+["Long Burger Anda Wala",140,"Desi anda burger"],
+["Loaded Fries",280,"Loaded fries with pops"],
+["Seekh Kabab",80,"Fresh BBQ kabab"],
+["Shawarma",160,"Classic chicken shawarma"],
+["Zinger Shawarma",230,"Today special"],
+["Kabab Roll",250,"Juicy kabab roll"],
+["Zinger Paratha Roll",250,"Flaky paratha roll"],
+["Paratha",70,"Fresh crispy paratha"],
+["Chai Paratha",110,"Paratha with hot chai"],
+["Special Chai",80,"Elaichi Sonf Adrak Podina"],
+["Regular Chai",50,"Classic doodh patti chai"]
+];
+let cart={};
+function renderMenu(){
+let q=document.getElementById("search").value.toLowerCase();
+let html="";
+items.forEach(function(it,i){
+if(it[0].toLowerCase().includes(q)){
+html+='<div class="item"><div><h3>'+it[0]+'</h3><p>'+it[2]+'</p></div><span class="price">Rs '+it[1]+'</span><button class="add" onclick="addCart('+i+')">Add</button></div>';
+}
+});
+document.getElementById("menu").innerHTML=html||"<p style='color:#777'>Item nahi mila</p>";
+}
+function addCart(i){
+let name=items[i][0];
+if(!cart[name]) cart[name]={price:items[i][1],qty:0};
+cart[name].qty++;
+renderCart();
+document.getElementById("cartBox").style.display="block";
+}
+function renderCart(){
+let total=0,count=0,html="",msg="Assalam o Alaikum order:%0A";
+Object.keys(cart).forEach(function(name){
+let c=cart[name]; total+=c.price*c.qty; count+=c.qty;
+msg+=encodeURIComponent(name+" x "+c.qty+" = Rs "+(c.price*c.qty)+"%0A");
+html+="<p>"+name+" x "+c.qty+" - Rs "+(c.price*c.qty)+"</p>";
+});
+document.getElementById("cartItems").innerHTML=html||"Cart khali hai";
+document.getElementById("cartTotal").innerText="Total: Rs "+total;
+document.getElementById("count").innerText=count;
+document.getElementById("sendBtn").href="https://wa.me/923280171357?text="+msg+"Total:%20Rs%20"+total;
+}
+function clearCart(){cart={};renderCart();}
+function toggleCart(){let b=document.getElementById("cartBox");b.style.display=b.style.display==="block"?"none":"block";}
+function setLoyal(n){localStorage.setItem("loyal",n);document.getElementById("loyalText").innerText=n>=10?"Mubarak! 1 Shawarma FREE":n+" / 10 Orders";}
+document.getElementById("search").addEventListener("input",renderMenu);
+let h=new Date().getHours();
+document.getElementById("status").innerText=(h>=11&&h<23)?"Open Now • 11AM - 11PM":"Closed Now • 11AM - 11PM";
+setLoyal(parseInt(localStorage.getItem("loyal")||"0"));
+renderMenu();
+renderCart();
+</script>
+</body>
+</html>
